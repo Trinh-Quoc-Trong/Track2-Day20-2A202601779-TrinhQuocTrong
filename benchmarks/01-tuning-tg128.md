@@ -21,6 +21,6 @@ Use this in your run:
 LAB_N_THREADS=32 make bench
 ```
 
-Đường cong kết quả trên hệ thống này gần như đi ngang (flat), với khoảng cách giữa `-t 1` và `-t 32` chỉ là 1.08x (115.0 tok/s lên 124.0 tok/s). Điểm "knee" (điểm gập) dường như không xuất hiện một cách rõ rệt.
+Đồ thị hiệu năng theo số lượng luồng (thread) thể hiện xu hướng tiệm cận phẳng (flat curve), với biên độ chênh lệch giữa `-t 1` và `-t 32` chỉ đạt 1.08x (115.0 tok/s đến 124.0 tok/s). Không ghi nhận điểm gãy (knee) rõ rệt.
 
-Kết quả khác biệt với kỳ vọng thông thường (peak tại số lượng nhân vật lý - physical cores) này cho thấy quá trình decode (tg128) trên máy không bị giới hạn bởi năng lực tính toán của CPU (compute-bound), mà bị nghẽn thắt cổ chai ở băng thông bộ nhớ (memory-bandwidth bound). Chỉ với 1 hoặc 5 luồng, CPU đã gần như tiêu thụ cạn kiệt băng thông RAM để truyền trọng số (weights) của mô hình. Do đó, việc thêm nhiều luồng tính toán hơn không thể đẩy nhanh quá trình vì chúng phải xếp hàng chờ dữ liệu từ RAM. Mức tăng nhỏ ở `-t 32` có thể đến từ khả năng latency hiding tốt hơn khi oversubscribe, hoặc chỉ là nhiễu hệ thống, nhưng về bản chất đây vẫn là một quá trình memory-bound.
+Kết quả phân tích chỉ ra rằng pha giải mã (decode) bị giới hạn hoàn toàn bởi băng thông bộ nhớ (memory-bandwidth bound) thay vì năng lực tính toán của CPU (compute-bound). Dù cấu hình ở mức 1 hay 5 luồng, hệ thống đã đạt đến giới hạn truyền tải trọng số từ RAM vào bộ nhớ đệm CPU. Việc gia tăng số luồng xử lý không đem lại hiệu quả do hiện tượng thắt cổ chai I/O. Mức cải thiện vi mô tại `-t 32` chủ yếu bắt nguồn từ cơ chế latency hiding của luồng oversubscribe, khẳng định bản chất bài toán là tối ưu I/O thay vì mở rộng tính toán.

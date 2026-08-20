@@ -29,8 +29,8 @@ P95 grew no faster than throughput (0.29x vs 3.60x), so this server still has he
 
 ## Your reading
 
-Server đã bão hòa (saturate) khi lượng truy cập tăng lên 50 users. Bằng chứng rõ nhất là Effective Concurrency đạt 41.9 trong khi máy chủ chỉ cấu hình `--parallel 4`. Hệ số occupancy/slot ratio lên tới 10.48 cho thấy phần lớn thời gian (latency) của các request là thời gian nằm chờ trong hàng đợi (Queue Time) chứ không phải thời gian tính toán thực tế.
+Hệ thống bão hòa (saturate) ở tải 50 người dùng với mức Effective Concurrency đạt 41.9, vượt xa cấu hình `--parallel 4`. Hệ số occupancy/slot (10.48) chỉ ra rằng phần lớn thời gian phản hồi (latency) phát sinh từ hàng đợi chờ xử lý (Queue Time) thay vì thời gian tính toán (Compute Time).
 
-Mặc dù hệ thống báo cáo "At capacity, still scaling" do RPS vẫn tăng 3.60x, nhưng với P50 latency ở mức 12 giây cho 50 users, trải nghiệm người dùng thực tế sẽ bị vi phạm SLO nghiêm trọng. 
+Dù thông lượng (RPS) tăng 3.60x, mức P50 latency 12 giây sẽ dẫn đến vi phạm SLO nghiêm trọng trong môi trường thực tế. 
 
-Để tăng Goodput@SLO, thay đổi đầu tiên cần thực hiện là tăng `--parallel` (ví dụ lên 8 hoặc 16) để server có thể tiếp nhận batch lớn hơn, tận dụng việc CPU đang bị memory-bandwidth bound (như phát hiện ở bước Tune). Việc tăng parallel sẽ giúp giải phóng hàng đợi nhanh hơn và giảm Queue Time, miễn là hệ thống vẫn còn đủ RAM để chứa thêm KV cache cho các context bổ sung.
+Để tối ưu hóa Goodput@SLO, ưu tiên hàng đầu là tăng thông số `--parallel` (lên 8 hoặc 16) nhằm mở rộng kích thước batch. Do hệ thống đang trong trạng thái memory-bandwidth bound, việc tăng batching sẽ tận dụng tốt hơn tài nguyên RAM và giải phóng hàng đợi nhanh chóng, miễn là dung lượng RAM còn trống đủ để cấp phát thêm KV Cache.

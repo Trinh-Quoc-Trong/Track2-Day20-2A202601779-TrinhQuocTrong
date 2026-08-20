@@ -28,12 +28,12 @@ Dominant stage: **llm** (100% of total)
 > Splitting prefill and decode helps because prefill is compute-bound and decode is memory-bandwidth-bound.
 
 
-Trong pipeline RAG này:
-- N16 (Embedding Model): **Stubbed** (hoàn toàn bỏ qua, hệ thống rơi vào luồng keyword overlap fallback, tốn 0.0 ms).
-- N17 (Vector Database): **Stubbed** (dữ liệu `TOY_DOCS` được lưu cứng dưới dạng một list dictionary trong RAM).
-- N18 (Retrieval Algorithm): **Stubbed** (sử dụng thuật toán đếm từ vựng trùng lặp cơ bản, độ trễ 0.0 ms do dữ liệu quá nhỏ).
-- N19 (LLM Inference Server): **Real** (thực hiện HTTP POST request tới `llama-server` ở `localhost:8080` đang chạy Gemma 4 E2B).
+Phân tích thành phần RAG pipeline:
+- N16 (Embedding Model): **Stubbed** (kích hoạt fallback keyword overlap, độ trễ 0.0 ms).
+- N17 (Vector Database): **Stubbed** (dữ liệu `TOY_DOCS` cấp phát tĩnh trên RAM).
+- N18 (Retrieval Algorithm): **Stubbed** (thuật toán word overlap, độ trễ tiệm cận 0 do tải lượng thấp).
+- N19 (LLM Inference Server): **Real** (giao tiếp HTTP POST tới `llama-server` chạy Gemma 4 E2B).
 
-Giai đoạn chiếm thời gian áp đảo là **llm** (100% thời lượng, trung bình 5430.0 ms). Điều này hoàn toàn khớp với kỳ vọng vì các khâu còn lại bị stub và chỉ tốn vài chục micro giây để xử lý chuỗi trên RAM.
+Điểm nghẽn (bottleneck) hệ thống tập trung hoàn toàn tại khâu **llm** (chiếm 100% tổng thời gian, trung bình 5430.0 ms). Kết quả này phản ánh chính xác cấu trúc pipeline do các dịch vụ phụ trợ đã được giả lập (stub).
 
-Nếu phải giảm một nửa độ trễ (latency) của pipeline này, tôi sẽ tấn công duy nhất vào khâu **llm**. Vì nó chiếm 100% thời gian, mọi tối ưu ở các khâu khác là vô nghĩa. Đối với LLM trong tác vụ RAG, phần tốn thời gian nhất (compute-bound) là quá trình Prefill (đọc ngữ cảnh). Do đó, tôi sẽ áp dụng kỹ thuật **Prompt Caching** (như Semantic Cache hoặc Prefix/KV Cache) để bỏ qua hoàn toàn giai đoạn tính toán Prefill đối với các context được retrieve trùng lặp, từ đó có thể dễ dàng cắt giảm 50-80% thời gian phản hồi.
+Để tối ưu hóa giảm 50% độ trễ tổng thể, trọng tâm duy nhất là thành phần **llm**. Do giai đoạn Prefill xử lý ngữ cảnh dài là tác vụ tiêu tốn chi phí tính toán (compute-bound) lớn nhất trong RAG, kỹ thuật **Prompt Caching** (như Prefix/KV Cache hoặc Semantic Cache) là giải pháp tối ưu. Cơ chế này cho phép triệt tiêu hoàn toàn chu kỳ tính toán Prefill cho các tài liệu (context) truy xuất trùng lặp, tạo tiền đề cắt giảm 50-80% thời gian phản hồi.
